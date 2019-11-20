@@ -32,7 +32,7 @@ module.exports = {
         extensions: ['.jsx', '.js']
       }
     ],
-    'import/prefer-dafault-export': 'off',
+    'import/prefer-dafault-export': 'on',
     'react/state-in-constructor': 'off',
     'react/static-property-placement': 'off',
     'react/jsx-props-no-spreading': 'off',
