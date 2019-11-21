@@ -31,6 +31,8 @@ export default class User extends Component {
   state = {
     stars: [],
     loading: false,
+    page: 1,
+    refreshing: false,
   };
 
   async componentDidMount() {
@@ -44,10 +46,42 @@ export default class User extends Component {
     this.setState({ stars: response.data, loading: false });
   }
 
+  handleNavigate = starred => {
+    const { navigation } = this.props;
+
+    navigation.navigate('Starred', { starred });
+  };
+
+  async loadMore() {
+    const { navigation } = this.props;
+    const user = navigation.getParam('user');
+    const { page } = this.state;
+
+    this.setState({ page: page + 1 });
+
+    // https://api.github.com/users/diego3g/starred?page=2
+
+    const response = await api.get(`/users/${user.login}/starred`, {
+      page,
+    });
+
+    this.setState({ stars: response.data });
+  }
+
+  async refreshList() {
+    const { navigation } = this.props;
+    const user = navigation.getParam('user');
+
+    this.setState({ loading: true, refreshing: true });
+
+    const response = await api.get(`/users/${user.login}/starred`);
+
+    this.setState({ stars: response.data, loading: false, refreshing: false });
+  }
+
   render() {
     const { navigation } = this.props;
-    const { stars } = this.state;
-    const { loading } = this.state;
+    const { stars, loading, refreshing } = this.state;
 
     const user = navigation.getParam('user');
 
@@ -60,6 +94,10 @@ export default class User extends Component {
         </Header>
 
         <Stars
+          onEndReachedThreshold={0.2}
+          onEndReached={this.loadMore}
+          onRefresh={this.refreshList}
+          refreshing={refreshing}
           data={stars}
           keyExtractor={star => String(star.id)}
           loading={loading}
@@ -68,7 +106,7 @@ export default class User extends Component {
               <ActivityIndicator color="#FFF" />
             ) : (
               ({ item }) => (
-                <Starred>
+                <Starred onPress={() => this.handleNavigate(item)}>
                   <OwnerAvatar source={{ uri: item.owner.avatar_url }} />
                   <Info>
                     <Title>{item.name}</Title>
